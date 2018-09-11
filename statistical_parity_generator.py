@@ -56,12 +56,10 @@ def generate_dataset(m, n, biased, eps, p_y_a, p_a, p):
   v_attr_func = np.vectorize(get_attr)
 
   # Step 1: Populate protected
-  protected_attr = np.array([1 if random() < p_a else 0 for _ in range(n)])
+  protected_attr = np.array([[1 if random() < p_a else 0 for _ in range(n)]])
 
   # Step 2: Populate outcome
   outcome = v_outcome_func(protected_attr)
-
-  dataset = np.stack(protected_attr, outcome)
 
   columns = np.zeros((m, n))
   # Step 3: Populate columns
@@ -70,8 +68,8 @@ def generate_dataset(m, n, biased, eps, p_y_a, p_a, p):
       columns[i,:] = v_attr_func(outcome))
     else:
       columns[i,:]= [1 if random() < p else 0 for _ in range(m)]))
-
-  return np.concatenate((columns, dataset))
+  
+  return np.concatenate((columns, protected_attr, outcome)).T
 
 
 def validate_args(m, p_y_a, p_y_na, p_a, p):
