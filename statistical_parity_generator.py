@@ -10,7 +10,7 @@ m       : int     [1, )   :   number of additional attributes
 n       : int     [1, )   :   number of samples
 biased  : boolean         :   unbiased or biased columns
 eps     : float   [0, 1]  :   | Pr[ Y^ = 1 | A = 1 ] - Pr[ Y^ = 1 | A = 0 ] | < epsilon 
-p_y_a   : float   [0, 1]  :   Pr[ Y^ = 1 | A = 1 ]
+p_y_A   : float   [0, 1]  :   Pr[ Y^ = 1 | A ]
 p_a     : float   [0, 1]  :   Pr[ A = 1] attribute likelihood
 p       : float   [0, 1]  :   Pr[ Y^ = 1 | f0 = 0] prob. of outcome given unprotected attribute
 ========================
@@ -27,8 +27,9 @@ is the number of m additional attributes plus the protected attribute
 and the outcome. columns are f0, ..., f_(m-1), protected_attr, outcome.
 '''
 
-def generate_dataset(m, n, biased, eps, p_y_a, p_a, p):
-  p_y_na = p_y_a - eps
+def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
+  p_y_a = p_y_A + eps/2
+  p_y_na = p_y_A - eps/2
   validate_args(m, p_y_a, p_y_na, p_a, p)
 
   def get_outcome(x):
