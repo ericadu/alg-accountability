@@ -1,5 +1,4 @@
 import numpy as np
-from random import random
 
 '''
 Dataset generator satisfying epsilon statistical parity. All dataset values are binary.
@@ -32,46 +31,51 @@ def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
   p_y_na = p_y_A - eps/2
   validate_args(m, biased, p_y_a, p_y_na, p_a, p)
 
-  def get_outcome(x):
-    if (x == 1 and random() < p_y_a) or (x == 0 and random() < p_y_na):
-      return 1
-    else:
-      return 0
+  def generate_protected_attribute_column():
+    # Can also convert to int8 since just 0/1, but need to be careful
+    # how it is used downstream. Don't want to accidentally cause overflow
+    # issues in FairML or FairTest
+    return (np.random.random(n) < p_a).astype(np.int64)
 
-  def get_attr(y):
-    p_y_eq_1 = p_a * p_y_a + (1 - p_a) * p_y_na
+  def generate_outcome_column(attr):
+    attr_idx = attr == 1
+    attr_size = np.sum(attr)
+    y = np.full(n, False)
+    # Fill in outcomes based on attribute
+    y[attr_idx] = np.random.random(attr_size) < p_y_a
+    y[np.logical_not(attr_idx)] = np.random.random(n - attr_size) < p_y_na
+    return y.astype(np.int64)
 
-    p_attr_0 = (p_y_eq_1 - 1 + p) / (2 * p - 1)
+  def generate_unbiased_attribute_column():
+    return (np.random.random(n) < p).astype(np.int64)
+    
+  def generate_biased_attribute_column(y):
+    # Define probability of outcome y using marginal probabilities based on attribute
+    p_y = p_a * p_y_a + (1 - p_a) * p_y_na
+    # Define probability of attribute x given outcome y (from write-up)
+    p_x_y = (p * (p_y + p - 1)) / (p_y * (2 * p - 1))
+    p_x_ny = ((1 - p) * (p_y + p - 1)) / ((1 - p_y) * (2 * p - 1))
+    # Fill in attribute x based on outcome y
+    y_idx = y == 1
+    y_size = np.sum(y)
+    x = np.full(n, False)
+    x[y_idx] = np.random.random(y_size) < p_x_y
+    x[np.logical_not(y_idx)] = np.random.random(n - y_size) < p_x_ny
+    return x.astype(np.int64)
 
-    p_attr_0_given_y_eq_1 = (p * p_attr_0) / p_y_eq_1
-    p_attr_0_given_y_eq_0 = (1 - p) * p_attr_0 / (1 - p_y_eq_1)
-
-    attr_if_1 = y == 1 and (random() < p_attr_0_given_y_eq_1)
-    attr_if_0 = y == 0 and (random() < p_attr_0_given_y_eq_0)
-
-    if attr_if_1 or attr_if_0:
-      return 0
-    else:
-      return 1
-
-  v_outcome_func = np.vectorize(get_outcome)
-  v_attr_func = np.vectorize(get_attr)
-
-  # Step 1: Populate protected
-  protected_attr = np.array([[1 if random() < p_a else 0 for _ in range(n)]])
+  # Step 1: Populate protected attribute
+  a = generate_protected_attribute_column()
 
   # Step 2: Populate outcome
-  outcome = v_outcome_func(protected_attr)
+  y = generate_outcome_column(a) 
 
-  # Step 3: Populate columns
-  columns = np.zeros((m, n))
-  for i in range(m):
-    if biased:
-      columns[i,:] = v_attr_func(outcome)
-    else:
-      columns[i,:]= [1 if random() < p else 0 for _ in range(n)]
-  
-  return np.concatenate((columns, protected_attr, outcome)).T
+  # Step 3: Populate additional attribute columns
+  if biased:
+    x_columns = np.vstack([generate_biased_attribute_column(y) for i in range(m)])
+  else:
+    x_columns = np.vstack([generate_biased_attribute_column(y) for i in range(m)])
+
+  return np.vstack([x_columns, a, y]).T
 
 
 def validate_args(m, biased, p_y_a, p_y_na, p_a, p):
