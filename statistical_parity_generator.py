@@ -80,8 +80,8 @@ def validate_args(m, biased, p_y_a, p_y_na, p_a, p):
 
   p_y_eq_1 = p_a * p_y_a + (1 - p_a) * p_y_na
   p_attr_0 = (p_y_eq_1 - 1 + p) / (2 * p - 1) if biased else p
-  p_attr_0_given_y_eq_1 = (p * p_attr_0) / p_y_eq_1
-  p_attr_0_given_y_eq_0 = (1 - p) * p_attr_0 / (1 - p_y_eq_1)
+  p_attr_0_given_y_eq_1 = (p * p_attr_0) / p_y_eq_1 if biased else p
+  p_attr_0_given_y_eq_0 = (1 - p) * p_attr_0 / (1 - p_y_eq_1) if biased else p
 
   floats = {
     'p_y_a': p_y_a,
