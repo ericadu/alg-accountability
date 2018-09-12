@@ -30,7 +30,7 @@ and the outcome. columns are f0, ..., f_(m-1), protected_attr, outcome.
 def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
   p_y_a = p_y_A + eps/2
   p_y_na = p_y_A - eps/2
-  validate_args(m, p_y_a, p_y_na, p_a, p)
+  validate_args(m, biased, p_y_a, p_y_na, p_a, p)
 
   def get_outcome(x):
     if (x == 1 and random() < p_y_a) or (x == 0 and random() < p_y_na):
@@ -40,10 +40,11 @@ def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
 
   def get_attr(y):
     p_y_eq_1 = p_a * p_y_a + (1 - p_a) * p_y_na
+
     p_attr_0 = (p_y_eq_1 - 1 + p) / (2 * p - 1)
 
-    p_attr_0_given_y_eq_1 = (p * p_attr) / p_y_eq_1
-    p_attr_0_given_y_eq_0 = (1 - p) * p_attr / (1 - p_y_eq_1)
+    p_attr_0_given_y_eq_1 = (p * p_attr_0) / p_y_eq_1
+    p_attr_0_given_y_eq_0 = (1 - p) * p_attr_0 / (1 - p_y_eq_1)
 
     attr_if_1 = y == 1 and (random() < p_attr_0_given_y_eq_1)
     attr_if_0 = y == 0 and (random() < p_attr_0_given_y_eq_0)
@@ -62,29 +63,37 @@ def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
   # Step 2: Populate outcome
   outcome = v_outcome_func(protected_attr)
 
-  columns = np.zeros((m, n))
   # Step 3: Populate columns
+  columns = np.zeros((m, n))
   for i in range(m):
     if biased:
-      columns[i,:] = v_attr_func(outcome))
+      columns[i,:] = v_attr_func(outcome)
     else:
-      columns[i,:]= [1 if random() < p else 0 for _ in range(m)]))
+      columns[i,:]= [1 if random() < p else 0 for _ in range(n)]
   
   return np.concatenate((columns, protected_attr, outcome)).T
 
 
-def validate_args(m, p_y_a, p_y_na, p_a, p):
+def validate_args(m, biased, p_y_a, p_y_na, p_a, p):
   if m < 1:
     raise ValueError("m must be greater than 0.")
 
-  if not 0.0 <= p_y_a <= 1.0:
-    raise ValueError("p_y_a must be between 0.0 and 1.0. Currently equal to: ".format(str(p_y_a)))
+  p_y_eq_1 = p_a * p_y_a + (1 - p_a) * p_y_na
+  p_attr_0 = (p_y_eq_1 - 1 + p) / (2 * p - 1) if biased else p
+  p_attr_0_given_y_eq_1 = (p * p_attr_0) / p_y_eq_1
+  p_attr_0_given_y_eq_0 = (1 - p) * p_attr_0 / (1 - p_y_eq_1)
 
-  if not 0.0 <= p_y_na <= 1.0:
-    raise ValueError("p_y_na must be between 0.0 and 1.0. Currently equal to: ".format(str(p_y_na)))
+  floats = {
+    'p_y_a': p_y_a,
+    'p_y_na': p_y_na,
+    'p_a': p_a,
+    'p': p,
+    'p_y_eq_1': p_y_eq_1,
+    'p_attr_0': p_attr_0,
+    'p_attr_0_given_y_eq_1': p_attr_0_given_y_eq_1,
+    'p_attr_0_given_y_eq_0': p_attr_0_given_y_eq_0 
+  }
 
-  if not 0.0 <= p_a <= 1.0:
-    raise ValueError("p_a must be between 0.0 and 1.0. Currently equal to: ".format(str(p_a)))
-
-  if not 0.0 <= p < 1.0:
-    raise ValueError("p must be between 0.0 and 1.0. Currently equal to: ".format(str(p)))
+  for name, val in floats.items():
+    if not 0.0 <= val <= 1.0:
+      raise ValueError("{} must be between 0.0 and 1.0. Currently equal to: ".format(name, str(val)))
