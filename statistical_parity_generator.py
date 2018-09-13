@@ -40,20 +40,10 @@ def generate_dataset(exp, m, n, biased, eps, p_y_A, p_a, p):
       return 0
 
   def get_attr(y):
-    p_y_eq_1 = p_a * p_y_a + (1 - p_a) * p_y_na
-
-    p_attr_0 = (p_y_eq_1 - 1 + p) / (2 * p - 1)
-
-    p_attr_0_given_y_eq_1 = (p * p_attr_0) / p_y_eq_1
-    p_attr_0_given_y_eq_0 = (1 - p) * p_attr_0 / (1 - p_y_eq_1)
-
-    attr_if_1 = y == 1 and (random() < p_attr_0_given_y_eq_1)
-    attr_if_0 = y == 0 and (random() < p_attr_0_given_y_eq_0)
-
-    if attr_if_1 or attr_if_0:
-      return 0
-    else:
+    if (y == 1 and random() < p) or (y == 0 and random() < 1 - p):
       return 1
+    else:
+      return 0
 
   v_outcome_func = np.vectorize(get_outcome)
   v_attr_func = np.vectorize(get_attr)
@@ -79,20 +69,11 @@ def validate_args(exp, m, biased, p_y_a, p_y_na, p_a, p):
   if m < 1:
     raise ValueError("m must be greater than 0.")
 
-  p_y_eq_1 = p_a * p_y_a + (1 - p_a) * p_y_na
-  p_attr_0 = (p_y_eq_1 - 1 + p) / (2 * p - 1) if biased else p
-  p_attr_0_given_y_eq_1 = (p * p_attr_0) / p_y_eq_1 if biased else p
-  p_attr_0_given_y_eq_0 = (1 - p) * p_attr_0 / (1 - p_y_eq_1) if biased else p
-
   floats = {
     'p_y_a': p_y_a,
     'p_y_na': p_y_na,
     'p_a': p_a,
     'p': p,
-    'p_y_eq_1': p_y_eq_1,
-    'p_attr_0': p_attr_0,
-    'p_attr_0_given_y_eq_1': p_attr_0_given_y_eq_1,
-    'p_attr_0_given_y_eq_0': p_attr_0_given_y_eq_0 
   }
 
   for name, val in floats.items():
