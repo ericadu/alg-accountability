@@ -6,6 +6,7 @@ Dataset generator satisfying epsilon statistical parity. All dataset values are 
 A base dataset has 1 protected attribute column and an output.
 ========================
 INPUTS
+exp     : str             :   experiment name
 m       : int     [1, )   :   number of additional attributes
 n       : int     [1, )   :   number of samples
 biased  : boolean         :   unbiased or biased columns
@@ -27,10 +28,10 @@ is the number of m additional attributes plus the protected attribute
 and the outcome. columns are f0, ..., f_(m-1), protected_attr, outcome.
 '''
 
-def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
+def generate_dataset(exp, m, n, biased, eps, p_y_A, p_a, p):
   p_y_a = p_y_A + eps/2
   p_y_na = p_y_A - eps/2
-  validate_args(m, biased, p_y_a, p_y_na, p_a, p)
+  validate_args(exp, m, biased, p_y_a, p_y_na, p_a, p)
 
   def get_outcome(x):
     if (x == 1 and random() < p_y_a) or (x == 0 and random() < p_y_na):
@@ -74,7 +75,7 @@ def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
   return np.concatenate((columns, protected_attr, outcome)).T
 
 
-def validate_args(m, biased, p_y_a, p_y_na, p_a, p):
+def validate_args(exp, m, biased, p_y_a, p_y_na, p_a, p):
   if m < 1:
     raise ValueError("m must be greater than 0.")
 
@@ -96,4 +97,7 @@ def validate_args(m, biased, p_y_a, p_y_na, p_a, p):
 
   for name, val in floats.items():
     if not 0.0 <= val <= 1.0:
-      raise ValueError("{} must be between 0.0 and 1.0. Currently equal to: ".format(name, str(val)))
+      formatted_val = str(val)
+      raise ValueError("In {}, value {} must be between 0.0 and 1.0. Currently equal to: ".format(exp, name, formatted_val))
+
+
