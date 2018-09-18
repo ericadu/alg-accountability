@@ -30,7 +30,7 @@ and the outcome. columns are f0, ..., f_(m-1), protected_attr, outcome.
 def generate_dataset_values(m, n, biased, eps, p_y_A, p_a, p):
   p_y_a = p_y_A + eps/2
   p_y_na = p_y_A - eps/2
-  # validate_args(exp, m, biased, p_y_a, p_y_na, p_a, p)
+  validate_args(m, biased, p_y_a, p_y_na, p_a, p)
 
   def generate_protected_attribute_column():
     # Can also convert to int8 since just 0/1, but need to be careful
@@ -51,11 +51,9 @@ def generate_dataset_values(m, n, biased, eps, p_y_A, p_a, p):
     return (np.random.random(n) < p).astype(np.int64)
     
   def generate_biased_attribute_column(y):
-    # Define probability of outcome y using marginal probabilities based on attribute
-    p_y = p_a * p_y_a + (1 - p_a) * p_y_na
     # Define probability of attribute x given outcome y (from write-up)
-    p_x_y = (p * (p_y + p - 1)) / (p_y * (2 * p - 1))
-    p_x_ny = ((1 - p) * (p_y + p - 1)) / ((1 - p_y) * (2 * p - 1))
+    p_x_y = p
+    p_x_ny = 1 - p
     # Fill in attribute x based on outcome y
     y_idx = y == 1
     y_size = np.sum(y)
@@ -78,30 +76,22 @@ def generate_dataset_values(m, n, biased, eps, p_y_A, p_a, p):
 
   return np.vstack([x_columns, a, y]).T
 
+def validate_args(m, biased, p_y_a, p_y_na, p_a, p):
+  if m < 1:
+    raise ValueError("m must be greater than 0.")
 
-# def validate_args(m, biased, p_y_a, p_y_na, p_a, p):
-#   if m < 1:
-#     raise ValueError("m must be greater than 0.")
+  floats = {
+    'p_y_a': p_y_a,
+    'p_y_na': p_y_na,
+    'p_a': p_a,
+    'p': p,
+  }
 
-#   p_y_eq_1 = p_a * p_y_a + (1 - p_a) * p_y_na
-#   p_attr_0 = (p_y_eq_1 - 1 + p) / (2 * p - 1) if biased else p
-#   p_attr_0_given_y_eq_1 = (p * p_attr_0) / p_y_eq_1
-#   p_attr_0_given_y_eq_0 = (1 - p) * p_attr_0 / (1 - p_y_eq_1)
+  for name, val in floats.items():
+    if not 0.0 <= val <= 1.0:
+      formatted_val = str(val)
+      raise ValueError("Value {} must be between 0.0 and 1.0. Currently equal to: {}".format(name, formatted_val))
 
-#   floats = {
-#     'p_y_a': p_y_a,
-#     'p_y_na': p_y_na,
-#     'p_a': p_a,
-#     'p': p,
-#     'p_y_eq_1': p_y_eq_1,
-#     'p_attr_0': p_attr_0,
-#     'p_attr_0_given_y_eq_1': p_attr_0_given_y_eq_1,
-#     'p_attr_0_given_y_eq_0': p_attr_0_given_y_eq_0 
-#   }
-
-#   for name, val in floats.items():
-#     if not 0.0 <= val <= 1.0:
-#       raise ValueError("{} must be between 0.0 and 1.0. Currently equal to: ".format(name, str(val)))
 
 def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
   columns = ['X{}'.format(str(i)) for i in range(m)] + ['A', 'O']
@@ -127,5 +117,7 @@ def validate_dataset(dataset):
   p_biased = dataset.groupby(['X0', 'O']).size()[1][1] / dataset.X0.value_counts()[1]
   p_unbiased = dataset.X0.value_counts()[1] / n
 
+  a_corr = dataset['O'].corr(dataset['A'])
+  x_corr = dataset['O'].corr(dataset['X0'])
 
-  return m, n, eps, p_y_A, p_a, p_biased, p_unbiased
+  return m, n, eps, p_y_A, p_a, p_biased, p_unbiased, a_corr, x_corr
