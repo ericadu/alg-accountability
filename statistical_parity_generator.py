@@ -106,6 +106,9 @@ def validate_dataset(dataset):
   p_biased = dataset.groupby(['X0', 'O']).size()[1][1] / dataset.X0.value_counts()[1]
   p_unbiased = dataset.X0.value_counts()[1] / n
 
+  x_corr = dataset['X0'].corr(dataset['O'])
+  a_corr = dataset['A'].corr(dataset['O'])
 
-  return m, n, eps, p_y_A, p_a, p_biased, p_unbiased
+
+  return m, n, eps, p_y_A, p_a, p_biased, p_unbiased, x_corr, a_corr
 
