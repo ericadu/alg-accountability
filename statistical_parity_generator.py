@@ -88,10 +88,12 @@ def generate_dataset(exp, m, n, biased, eps, p_y_A, p_a, p):
   return pd.DataFrame(data=values, columns=columns)
 
 def validate_dataset(dataset):
+  m = len(dataset.columns) - 2
+  n = len(dataset.index)
   a = dataset.A.value_counts()[1]
   a_prime = dataset.A.value_counts()[0]
 
-  p_a = float(a) / len(dataset.index)
+  p_a = float(a) / n
 
   o = dataset.groupby(['A', 'O']).size()[1][1]
   o_prime = dataset.groupby(['A', 'O']).size()[0][1]
@@ -102,8 +104,8 @@ def validate_dataset(dataset):
   eps = p_y_a - p_y_na
 
   p_biased = dataset.groupby(['X0', 'O']).size()[1][1] / dataset.X0.value_counts()[1]
-  p_unbiased = dataset.X0.value_counts()[1] / len(dataset.index)
+  p_unbiased = dataset.X0.value_counts()[1] / n
 
 
-  return eps, p_y_A, p_a, p_biased, p_unbiased
+  return m, n, eps, p_y_A, p_a, p_biased, p_unbiased
 
