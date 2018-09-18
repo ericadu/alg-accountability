@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from random import random
 
 '''
@@ -13,7 +14,7 @@ biased  : boolean         :   unbiased or biased columns
 eps     : float   [0, 1]  :   | Pr[ Y^ = 1 | A = 1 ] - Pr[ Y^ = 1 | A = 0 ] | < epsilon 
 p_y_A   : float   [0, 1]  :   Pr[ Y^ = 1 | A ]
 p_a     : float   [0, 1]  :   Pr[ A = 1] attribute likelihood
-p       : float   [0, 1]  :   Pr[ Y^ = 1 | f0 = 0] prob. of outcome given unprotected attribute
+p       : float   [0, 1]  :   Pr[ Y^ = 1 | f0 = 1] prob. of outcome given unprotected attribute
 ========================
 ALGORITHM
 1. Populate protected attribute A with p_a
@@ -28,7 +29,7 @@ is the number of m additional attributes plus the protected attribute
 and the outcome. columns are f0, ..., f_(m-1), protected_attr, outcome.
 '''
 
-def generate_dataset(exp, m, n, biased, eps, p_y_A, p_a, p):
+def generate_dataset_values(exp, m, n, biased, eps, p_y_A, p_a, p):
   p_y_a = p_y_A + eps/2
   p_y_na = p_y_A - eps/2
   validate_args(exp, m, biased, p_y_a, p_y_na, p_a, p)
@@ -63,7 +64,7 @@ def generate_dataset(exp, m, n, biased, eps, p_y_A, p_a, p):
       columns[i,:]= [1 if random() < p else 0 for _ in range(n)]
   
   return np.concatenate((columns, protected_attr, outcome)).T
-
+  
 
 def validate_args(exp, m, biased, p_y_a, p_y_na, p_a, p):
   if m < 1:
@@ -81,4 +82,28 @@ def validate_args(exp, m, biased, p_y_a, p_y_na, p_a, p):
       formatted_val = str(val)
       raise ValueError("In {}, value {} must be between 0.0 and 1.0. Currently equal to: ".format(exp, name, formatted_val))
 
+def generate_dataset(exp, m, n, biased, eps, p_y_A, p_a, p):
+  columns = ['X{}'.format(str(i)) for i in range(m)] + ['A', 'O']
+  values = generate_dataset_values(exp, m, n, biased, eps, p_y_A, p_a, p)
+  return pd.DataFrame(data=values, columns=columns)
+
+def validate_dataset(dataset):
+  a = dataset.A.value_counts()[1]
+  a_prime = dataset.A.value_counts()[0]
+
+  p_a = float(a) / len(dataset.index)
+
+  o = dataset.groupby(['A', 'O']).size()[1][1]
+  o_prime = dataset.groupby(['A', 'O']).size()[0][1]
+
+  p_y_a = float(o) / a
+  p_y_na = float(o_prime) / float(a_prime)
+  p_y_A = (p_y_a + p_y_na) / 2
+  eps = p_y_a - p_y_na
+
+  p_biased = dataset.groupby(['X0', 'O']).size()[1][1] / dataset.X0.value_counts()[1]
+  p_unbiased = dataset.X0.value_counts()[1] / len(dataset.index)
+
+
+  return eps, p_y_A, p_a, p_biased, p_unbiased
 
