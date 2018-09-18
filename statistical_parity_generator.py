@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 '''
 Dataset generator satisfying epsilon statistical parity. All dataset values are binary.
@@ -26,10 +27,10 @@ is the number of m additional attributes plus the protected attribute
 and the outcome. columns are f0, ..., f_(m-1), protected_attr, outcome.
 '''
 
-def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
+def generate_dataset_values(m, n, biased, eps, p_y_A, p_a, p):
   p_y_a = p_y_A + eps/2
   p_y_na = p_y_A - eps/2
-  validate_args(m, biased, p_y_a, p_y_na, p_a, p)
+  # validate_args(exp, m, biased, p_y_a, p_y_na, p_a, p)
 
   def generate_protected_attribute_column():
     # Can also convert to int8 since just 0/1, but need to be careful
@@ -78,26 +79,53 @@ def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
   return np.vstack([x_columns, a, y]).T
 
 
-def validate_args(m, biased, p_y_a, p_y_na, p_a, p):
-  if m < 1:
-    raise ValueError("m must be greater than 0.")
+# def validate_args(m, biased, p_y_a, p_y_na, p_a, p):
+#   if m < 1:
+#     raise ValueError("m must be greater than 0.")
 
-  p_y_eq_1 = p_a * p_y_a + (1 - p_a) * p_y_na
-  p_attr_0 = (p_y_eq_1 - 1 + p) / (2 * p - 1) if biased else p
-  p_attr_0_given_y_eq_1 = (p * p_attr_0) / p_y_eq_1
-  p_attr_0_given_y_eq_0 = (1 - p) * p_attr_0 / (1 - p_y_eq_1)
+#   p_y_eq_1 = p_a * p_y_a + (1 - p_a) * p_y_na
+#   p_attr_0 = (p_y_eq_1 - 1 + p) / (2 * p - 1) if biased else p
+#   p_attr_0_given_y_eq_1 = (p * p_attr_0) / p_y_eq_1
+#   p_attr_0_given_y_eq_0 = (1 - p) * p_attr_0 / (1 - p_y_eq_1)
 
-  floats = {
-    'p_y_a': p_y_a,
-    'p_y_na': p_y_na,
-    'p_a': p_a,
-    'p': p,
-    'p_y_eq_1': p_y_eq_1,
-    'p_attr_0': p_attr_0,
-    'p_attr_0_given_y_eq_1': p_attr_0_given_y_eq_1,
-    'p_attr_0_given_y_eq_0': p_attr_0_given_y_eq_0 
-  }
+#   floats = {
+#     'p_y_a': p_y_a,
+#     'p_y_na': p_y_na,
+#     'p_a': p_a,
+#     'p': p,
+#     'p_y_eq_1': p_y_eq_1,
+#     'p_attr_0': p_attr_0,
+#     'p_attr_0_given_y_eq_1': p_attr_0_given_y_eq_1,
+#     'p_attr_0_given_y_eq_0': p_attr_0_given_y_eq_0 
+#   }
 
-  for name, val in floats.items():
-    if not 0.0 <= val <= 1.0:
-      raise ValueError("{} must be between 0.0 and 1.0. Currently equal to: ".format(name, str(val)))
+#   for name, val in floats.items():
+#     if not 0.0 <= val <= 1.0:
+#       raise ValueError("{} must be between 0.0 and 1.0. Currently equal to: ".format(name, str(val)))
+
+def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
+  columns = ['X{}'.format(str(i)) for i in range(m)] + ['A', 'O']
+  values = generate_dataset_values(m, n, biased, eps, p_y_A, p_a, p)
+  return pd.DataFrame(data=values, columns=columns)
+
+def validate_dataset(dataset):
+  m = len(dataset.columns) - 2
+  n = len(dataset.index)
+  a = dataset.A.value_counts()[1]
+  a_prime = dataset.A.value_counts()[0]
+
+  p_a = float(a) / n
+
+  o = dataset.groupby(['A', 'O']).size()[1][1]
+  o_prime = dataset.groupby(['A', 'O']).size()[0][1]
+
+  p_y_a = float(o) / a
+  p_y_na = float(o_prime) / float(a_prime)
+  p_y_A = (p_y_a + p_y_na) / 2
+  eps = p_y_a - p_y_na
+
+  p_biased = dataset.groupby(['X0', 'O']).size()[1][1] / dataset.X0.value_counts()[1]
+  p_unbiased = dataset.X0.value_counts()[1] / n
+
+
+  return m, n, eps, p_y_A, p_a, p_biased, p_unbiased
