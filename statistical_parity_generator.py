@@ -72,7 +72,7 @@ def generate_dataset_values(m, n, biased, eps, p_y_A, p_a, p):
   if biased:
     x_columns = np.vstack([generate_biased_attribute_column(y) for i in range(m)])
   else:
-    x_columns = np.vstack([generate_biased_attribute_column(y) for i in range(m)])
+    x_columns = np.vstack([generate_unbiased_attribute_column(y) for i in range(m)])
 
   return np.vstack([x_columns, a, y]).T
 
