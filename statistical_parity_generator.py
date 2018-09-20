@@ -12,19 +12,19 @@ biased  : boolean         :   unbiased or biased columns
 eps     : float   [0, 1]  :   | Pr[ Y^ = 1 | A = 1 ] - Pr[ Y^ = 1 | A = 0 ] | < epsilon 
 p_y_A   : float   [0, 1]  :   Pr[ Y^ = 1 | A ]
 p_a     : float   [0, 1]  :   Pr[ A = 1] attribute likelihood
-p       : float   [0, 1]  :   Pr[ Y^ = 1 | f0 = 0] prob. of outcome given unprotected attribute
+p       : float   [0, 1]  :   Pr[ X_i = 1 | Y^ = 1] (biased) or Pr[X_i = 1] (unbiased) 
 ========================
 ALGORITHM
 1. Populate protected attribute A with p_a
-2. Populate outcome y using attribute A and probability p_y_a and p_y_a' calculated from eps and p_y_A
-3. Populate f0:
+2. Populate outcome y using attribute A and probability p_y_a and p_y_na calculated from eps and p_y_A
+3. Populate other columns X_i:
   a. If unbiased, populate with p.
-  b. If biased, we use special case of Pr[Y = 1 | f_0 = 0] and Pr[Y = 1 | f_0 = 1]
+  b. If biased, populate with p dependent on Y^
 ========================
 OUTPUT
 dataset   : (m + 2) x n sized numpy matrix, where number of columns
 is the number of m additional attributes plus the protected attribute
-and the outcome. columns are f0, ..., f_(m-1), protected_attr, outcome.
+and the outcome. [X_0, ..., X_m, A, Y^]
 '''
 
 def generate_dataset_values(m, n, biased, eps, p_y_A, p_a, p):
