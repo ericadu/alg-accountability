@@ -10,7 +10,7 @@ m       : int     [1, )   :   number of additional attributes
 n       : int     [1, )   :   number of samples
 biased  : boolean         :   unbiased or biased columns
 eps     : float   [0, 1]  :   | Pr[ Y^ = 1 | A = 1 ] - Pr[ Y^ = 1 | A = 0 ] | < epsilon 
-p_y_A   : float   [0, 1]  :   Pr[ Y^ = 1 | A ]
+p_y_A   : float   [0, 1]  :   used to derive Pr[ Y^ = 1 | A = 1 ] and Pr[ Y^ = 1 | A = 0 ]  
 p_a     : float   [0, 1]  :   Pr[ A = 1] attribute likelihood
 p       : float   [0, 1]  :   Pr[ X_i = 1 | Y^ = 1] (biased) or Pr[X_i = 1] (unbiased) 
 ========================
@@ -72,7 +72,7 @@ def generate_dataset_values(m, n, biased, eps, p_y_A, p_a, p):
   if biased:
     x_columns = np.vstack([generate_biased_attribute_column(y) for i in range(m)])
   else:
-    x_columns = np.vstack([generate_unbiased_attribute_column(y) for i in range(m)])
+    x_columns = np.vstack([generate_unbiased_attribute_column() for i in range(m)])
 
   return np.vstack([x_columns, a, y]).T
 
