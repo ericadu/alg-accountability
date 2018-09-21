@@ -72,12 +72,20 @@ def generate_dataset_values(m, n, biased, eps, delta, p):
 
   d_a = np.vstack([x_columns, a, y]).T
 
-  # Step 4: Calculate counterfactuals and removing l rows
-  na = np.zeros(2*split_size - l)
-  y_na = np.copy(y[:2*split_size - l])
-  flip_idx = np.random.random(2*split_size - l) < eps
+  # Step 4: Calculate counterfactuals and remove l rows
+  y_na = np.copy(y)
+  flip_idx = np.random.random(2*split_size) < eps
   y_na[flip_idx] = 1 - y_na[flip_idx]
-  d_na = np.vstack([x_columns[:, :2*split_size - l], na, y_na]).T
+
+  na_idx = np.concatenate([
+      np.where(y_na == 1)[0],
+      np.where(y_na == 0)[0][:-l]
+  ])
+
+  y_na = y_na[na_idx]
+  na = np.zeros(2*split_size - l)
+  x_na = x_columns[:, na_idx]
+  d_na = np.vstack([x_na, na, y_na]).T
 
   return np.vstack([d_a, d_na])
 
