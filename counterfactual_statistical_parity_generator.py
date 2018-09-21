@@ -9,8 +9,8 @@ INPUTS
 m       : int     [1, )   :   number of additional attributes
 n       : int     [1, )   :   number of samples
 biased  : boolean         :   unbiased or biased columns
-delta     : float   [0, 1]  :   | Pr[ Y^ = 1 | A = 1 ] - Pr[ Y^ = 1 | A = 0 ] | < delta
-eps   : float   [0, 1]  :   | Pr[ Y^ = 1 | A = 1, X ] - Pr[ Y^ = 1 | A = 0, X ] | < eps
+delta     : float   [0, 0.5]  :   | Pr[ Y^ = 1 | A = 1 ] - Pr[ Y^ = 1 | A = 0 ] | < delta
+eps   : float   [0, 0.5]  :   | Pr[ Y^ = 1 | A = 1, X ] - Pr[ Y^ = 1 | A = 0, X ] | < eps
 p       : float   [0, 1]  :   Pr[ X_i = 1 | Y^ = 1] (biased) or Pr[X_i = 1] (unbiased) 
 ========================
 ALGORITHM
@@ -77,10 +77,18 @@ def generate_dataset_values(m, n, biased, eps, delta, p):
   flip_idx = np.random.random(2*split_size) < eps
   y_na[flip_idx] = 1 - y_na[flip_idx]
 
-  na_idx = np.concatenate([
-      np.where(y_na == 1)[0],
-      np.where(y_na == 0)[0][:-l]
-  ])
+  print(split_size)
+  print(np.where(y_na == 0)[0].shape[0])
+  if np.where(y_na == 0)[0].shape[0] > split_size:
+    na_idx = np.concatenate([
+        np.where(y_na == 1)[0],
+        np.where(y_na == 0)[0][:-l]
+    ])
+  else:
+    na_idx = np.concatenate([
+        np.where(y_na == 1)[0][l:],
+        np.where(y_na == 0)[0]
+    ])
 
   y_na = y_na[na_idx]
   na = np.zeros(2*split_size - l)
