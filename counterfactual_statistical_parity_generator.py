@@ -1,16 +1,17 @@
 import numpy as np
 import pandas as pd
+import itertools as it
 
 '''
-Dataset generator satisfying delta statistical parity and epsilon counterfactual fairness.
+Dataset generator satisfying epsilon statistical parity and delta counterfactual fairness.
 All dataset values are binary.
 ========================
 INPUTS
 m       : int     [1, )   :   number of additional attributes
 n       : int     [1, )   :   number of samples
 biased  : boolean         :   unbiased or biased columns
-delta     : float   [0, 0.5]  :   | Pr[ Y^ = 1 | A = 1 ] - Pr[ Y^ = 1 | A = 0 ] | < delta
-eps   : float   [0, 0.5]  :   | Pr[ Y^ = 1 | A = 1, X ] - Pr[ Y^ = 1 | A = 0, X ] | < eps
+eps     : float   [0, 0.5]  :   | Pr[ Y^ = 1 | A = 1 ] - Pr[ Y^ = 1 | A = 0 ] | < eps
+delta   : float   [0, 0.5]  :   | Pr[ Y^ = 1 | A = 1, X ] - Pr[ Y^ = 1 | A = 0, X ] | < delta
 p       : float   [0, 1]  :   Pr[ X_i = 1 | Y^ = 1] (biased) or Pr[X_i = 1] (unbiased) 
 ========================
 ALGORITHM
@@ -21,7 +22,7 @@ ALGORITHM
   b. If biased, populate with p dependent on Y^
 4. Duplicate dataset with counterfactuals
   a. Replace A with unprotected attribute 0
-  b. Flip outcome Y^ with probability eps
+  b. Flip outcome Y^ with probability delta
   c. Remove some rows of Y^=0, A=0 to achieve statistical parity
 ========================
 OUTPUT
@@ -42,7 +43,7 @@ def generate_dataset_values(m, n, biased, eps, delta, p):
     p_x_ny = 1 - p
     # Fill in attribute x based on outcome y
     y_idx = y == 1
-    y_size = np.sum(y)
+    y_size = (np.sum(y)).astype(np.int64)
     x = np.full(n, False)
     x[y_idx] = np.random.random(y_size) < p_x_y
     x[np.logical_not(y_idx)] = np.random.random(n - y_size) < p_x_ny
@@ -51,10 +52,10 @@ def generate_dataset_values(m, n, biased, eps, delta, p):
   # Step 0: Calculate divisions in order to build dataset size n with statistical parity
   # TODO(nirvan): See notebook for calculations
   # Divide dataset into 4 sets of n/k
-  k = (4 * delta + 4.0) / (1.0 + 2 * delta)
+  k = (4 * eps + 4.0) / (1.0 + 2 * eps)
   split_size = int(n // k)
-  # Remove l values of one set in order to achieve delta statistical parity
-  l = int((delta * n) // (1.0 + delta))
+  # Remove l values of one set in order to achieve epsilon statistical parity
+  l = int((eps * n) // (1.0 + eps))
   if l > split_size:
     raise ValueError('Epsilon value for statistical parity unachievable')
 
@@ -74,11 +75,11 @@ def generate_dataset_values(m, n, biased, eps, delta, p):
 
   # Step 4: Calculate counterfactuals and remove l rows
   y_na = np.copy(y)
-  flip_idx = np.random.random(2*split_size) < eps
+  flip_idx = np.random.random(2*split_size) < delta
   y_na[flip_idx] = 1 - y_na[flip_idx]
 
-  print(split_size)
-  print(np.where(y_na == 0)[0].shape[0])
+  #print(split_size)
+  #print(np.where(y_na == 0)[0].shape[0])
   if np.where(y_na == 0)[0].shape[0] > split_size:
     na_idx = np.concatenate([
         np.where(y_na == 1)[0],
@@ -93,6 +94,7 @@ def generate_dataset_values(m, n, biased, eps, delta, p):
   y_na = y_na[na_idx]
   na = np.zeros(2*split_size - l)
   x_na = x_columns[:, na_idx]
+
   d_na = np.vstack([x_na, na, y_na]).T
 
   return np.vstack([d_a, d_na])
@@ -111,4 +113,47 @@ def generate_dataset(m, n, biased, eps, delta, p):
   return pd.DataFrame(data=values, columns=columns)
 
 def validate_dataset(dataset):
-  raise NotImplementedError()
+  m = len(dataset.columns) - 2
+  n = len(dataset.index)
+  a = dataset.A.value_counts()[1]
+  a_prime = dataset.A.value_counts()[0]
+
+  o = dataset.groupby(['A', 'O']).size()[1][1]
+  o_prime = dataset.groupby(['A', 'O']).size()[0][1]
+
+  p_y_a = float(o) / a
+  p_y_na = float(o_prime) / float(a_prime)
+
+  eps = abs(p_y_a - p_y_na)
+
+  p_biased = dataset.groupby(['X0', 'O']).size()[1][1] / dataset.X0.value_counts()[1]
+  p_unbiased = dataset.X0.value_counts()[1] / n
+
+  a_corr = dataset['O'].corr(dataset['A'])
+  x_corr = dataset['O'].corr(dataset['X0'])
+
+  indices = [list(i) for i in it.product([0, 1], repeat=m)]
+  df = dataset.groupby(list(dataset.columns.values)).size()
+  delta = 0
+  for index_set in indices:
+    cut = None
+    for i, j in enumerate(index_set):
+      if i == 0:
+        cut = df[j]
+      else:
+        cut = cut[j]
+
+    prob_pos = 0
+    prob_neg = 0
+
+    if 1 in cut:
+      pos_a = cut[1]
+      prob_pos = pos_a[1] / pos_a.sum() if 1 in pos_a else 0
+
+    if 0 in cut:
+      neg_a = cut[0]
+      prob_neg = neg_a[1] / neg_a.sum() if 1 in neg_a else 0
+
+    delta = delta + abs(prob_pos - prob_neg) * (cut.sum() / n)
+
+  return m, n, delta, eps

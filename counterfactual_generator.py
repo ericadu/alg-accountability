@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import itertools as it
 
 '''
 Dataset generator satisfying epsilon counterfactual fairness. All dataset values are binary
@@ -40,7 +41,7 @@ def generate_dataset_values(m, n, biased, eps, p):
     p_x_ny = 1 - p
     # Fill in attribute x based on outcome y
     y_idx = y == 1
-    y_size = np.sum(y)
+    y_size = (np.sum(y)).astype(np.int64)
     x = np.full(n, False)
     x[y_idx] = np.random.random(y_size) < p_x_y
     x[np.logical_not(y_idx)] = np.random.random(n - y_size) < p_x_ny
@@ -83,4 +84,50 @@ def generate_dataset(m, n, biased, eps, p):
   return pd.DataFrame(data=values, columns=columns)
 
 def validate_dataset(dataset):
-  raise NotImplementedError()
+  m = len(dataset.columns) - 2
+  n = len(dataset.index)
+  a = dataset.A.value_counts()[1]
+  a_prime = dataset.A.value_counts()[0]
+
+  o = dataset.groupby(['A', 'O']).size()[1][1]
+  o_prime = dataset.groupby(['A', 'O']).size()[0][1]
+
+  p_y_a = float(o) / a
+  p_y_na = float(o_prime) / float(a_prime)
+
+  eps = abs(p_y_a - p_y_na)
+
+  p_biased = dataset.groupby(['X0', 'O']).size()[1][1] / dataset.X0.value_counts()[1]
+  p_unbiased = dataset.X0.value_counts()[1] / n
+
+  a_corr = dataset['O'].corr(dataset['A'])
+  x_corr = dataset['O'].corr(dataset['X0'])
+
+  indices = [list(i) for i in it.product([0, 1], repeat=m)]
+  df = dataset.groupby(list(dataset.columns.values)).size()
+  delta = 0
+  for index_set in indices:
+    cut = None
+    for i, j in enumerate(index_set):
+      if i == 0:
+        cut = df[j]
+      else:
+        cut = cut[j]
+
+    prob_pos = 0
+    prob_neg = 0
+
+    if 1 in cut:
+      pos_a = cut[1]
+      prob_pos = pos_a[1] / pos_a.sum() if 1 in pos_a else 0
+
+    if 0 in cut:
+      neg_a = cut[0]
+      prob_neg = neg_a[1] / neg_a.sum() if 1 in neg_a else 0
+
+    delta = delta + abs(prob_pos - prob_neg) * (cut.sum() / n)
+
+  return m, n, delta, eps
+
+
+
