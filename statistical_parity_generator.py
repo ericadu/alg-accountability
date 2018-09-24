@@ -98,7 +98,7 @@ def generate_dataset(m, n, biased, eps, p_y_A, p_a, p):
   values = generate_dataset_values(m, n, biased, eps, p_y_A, p_a, p)
   return pd.DataFrame(data=values, columns=columns)
 
-def validate_dataset(dataset):
+def validate_dataset(dataset, biased):
   m = len(dataset.columns) - 2
   n = len(dataset.index)
   a = dataset.A.value_counts()[1]
@@ -114,10 +114,12 @@ def validate_dataset(dataset):
   p_y_A = (p_y_a + p_y_na) / 2
   eps = p_y_a - p_y_na
 
-  p_biased = dataset.groupby(['X0', 'O']).size()[1][1] / dataset.X0.value_counts()[1]
-  p_unbiased = dataset.X0.value_counts()[1] / n
+  if biased:
+    p = dataset.groupby(['X0', 'O']).size()[1][1] / dataset.X0.value_counts()[1]
+  else:
+    p = dataset.X0.value_counts()[1] / n
 
   a_corr = dataset['O'].corr(dataset['A'])
   x_corr = dataset['O'].corr(dataset['X0'])
 
-  return m, n, eps, p_y_A, p_a, p_biased, p_unbiased, a_corr, x_corr
+  return m, n, eps, p_y_A, p_a, p, a_corr, x_corr

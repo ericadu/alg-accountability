@@ -106,28 +106,38 @@ def validate_args(m, biased, p):
   if not 0.0 <= p <= 1.0:
     raise ValueError("Value p must be between 0.0 and 1.0.")
 
-
 def generate_dataset(m, n, biased, eps, delta, p):
   columns = ['X{}'.format(str(i)) for i in range(m)] + ['A', 'O']
   values = generate_dataset_values(m, n, biased, eps, delta,  p)
   return pd.DataFrame(data=values, columns=columns)
 
-def validate_dataset(dataset):
+def validate_dataset(dataset, biased):
   m = len(dataset.columns) - 2
   n = len(dataset.index)
   a = dataset.A.value_counts()[1]
   a_prime = dataset.A.value_counts()[0]
 
-  o = dataset.groupby(['A', 'O']).size()[1][1]
-  o_prime = dataset.groupby(['A', 'O']).size()[0][1]
+  group_by = dataset.groupby(['A', 'O']).size()
+
+  if 1 in group_by and 1 in group_by[1]:
+    o = group_by[1][1]
+  else: 
+    o = 0
+
+  if 0 in group_by and 1 in group_by[0]:
+    o_prime = group_by[0][1]
+  else:
+    o_prime = 0
 
   p_y_a = float(o) / a
   p_y_na = float(o_prime) / float(a_prime)
 
   eps = abs(p_y_a - p_y_na)
 
-  p_biased = dataset.groupby(['X0', 'O']).size()[1][1] / dataset.X0.value_counts()[1]
-  p_unbiased = dataset.X0.value_counts()[1] / n
+  if biased:
+    p = dataset.groupby(['X0', 'O']).size()[1][1] / dataset.X0.value_counts()[1]
+  else:
+    p = dataset.X0.value_counts()[1] / n
 
   a_corr = dataset['O'].corr(dataset['A'])
   x_corr = dataset['O'].corr(dataset['X0'])
@@ -156,4 +166,4 @@ def validate_dataset(dataset):
 
     delta = delta + abs(prob_pos - prob_neg) * (cut.sum() / n)
 
-  return m, n, delta, eps
+  return m, n, delta, eps, p
