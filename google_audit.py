@@ -1,0 +1,62 @@
+import tensorflow as tf
+from tensorflow import keras
+
+import numpy as numpy
+
+filenames = ['/Users/erica/Desktop/GitHub/data/compas-scores-two-years.csv']
+
+record_defaults= [
+  tf.int32,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.int32,
+  tf.string,
+  tf.string,
+  tf.int32,
+  tf.int32,
+  tf.int32,
+  tf.int32,
+  tf.int32,
+  tf.int32,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.int32,
+  tf.string,
+  tf.string,
+  tf.bool,
+  tf.string,
+  tf.string,
+  tf.int32,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.bool,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.int32,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.int32
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.string,
+  tf.int32,
+  tf.int32,
+  tf.int32,
+  tf.int32, 
+  tf.bool
+]
