@@ -1,0 +1,100 @@
+%!TEX root = main.tex
+
+\DeclareMathAlphabet{\mathcal}{OMS}{cmsy}{m}{n}  % Fix the awful mathcal fonts from mathptmx
+
+\usepackage{amsthm,amsmath,amssymb,amsfonts}
+\usepackage{xspace}
+\usepackage{booktabs}
+\usepackage{mathtools}
+\usepackage[inline]{enumitem}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{cryptocode}
+\usepackage{setspace}
+\usepackage{dashbox}
+\usepackage{subcaption}
+\usepackage{microtype}
+\usepackage{etoolbox}
+
+\usepackage{tgpagella}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\textwidth}{6.5in}
+\setlength{\topmargin}{-.25in}
+\setlength{\textheight}{8.5in}
+\setlength{\parskip}{1em}
+\setlength{\parindent}{0pt}
+
+\graphicspath{ {figs/} }
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}%
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}%
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}%
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}%
+\DeclarePairedDelimiter\prns{(}{)}%
+\DeclarePairedDelimiter\braces{\{}{\}}%
+\DeclarePairedDelimiter\bracks{[}{]}%
+\DeclarePairedDelimiterX\condprns[2]{(}{)}{\,#1 \;\delimsize\vert\; #2\,}
+\DeclarePairedDelimiterX\condbrks[2]{[}{]}{\,#1 \;\delimsize\vert\; #2\,}
+\DeclarePairedDelimiterX\condbraces[2]{\{}{\}}{\,#1 \;\delimsize\vert\; #2\,}
+\DeclarePairedDelimiterX\cond[2]{}{}{#1 \;\delimsize\vert\; #2}
+
+\newcommand{\bE}{\mathbb{E}}
+\newcommand{\bP}{\mathbb{P}}
+\newcommand{\bI}{\mathbb{I}}
+\newcommand{\bR}{\mathbb{R}}
+\newcommand{\bB}{\mathbb{B}}
+\newcommand{\R}[1]{\mathbb{R}^{#1}}
+\newcommand{\Rn}{\mathbb{R}^n}
+\newcommand{\sZ}{\mathcal{Z}}
+\newcommand{\sX}{\mathcal{X}}
+\newcommand{\sV}{\mathcal{V}}
+\newcommand{\sA}{\mathcal{A}}
+\newcommand{\sB}{\mathcal{B}}
+\newcommand{\sC}{\mathcal{C}}
+\newcommand{\sD}{\mathcal{D}}
+\newcommand{\sE}{\mathcal{E}}
+\newcommand{\sG}{\mathcal{G}}
+\newcommand{\sH}{\mathcal{H}}
+\newcommand{\sL}{\mathcal{L}}
+\newcommand{\sN}{\mathcal{N}}
+\newcommand{\sY}{\mathcal{Y}}
+\newcommand{\sF}{\mathcal{F}}
+\newcommand{\sO}{\mathcal{O}}
+\newcommand{\sT}{\mathcal{T}}
+\newcommand{\rad}{\mathscr{R}}
+
+\newcommand{\inv}[1]{{#1}^{-1}}
+\newcommand{\trn}[1]{{#1}^{\intercal}}
+\newcommand{\indep}{\;\rotatebox[origin=c]{90}{$\models$}\;}
+\newcommand{\sample}{\leftarrow_\$}
+\newcommand{\bin}{\braces{0,1}}
+
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+\newenvironment{sketch}{\renewcommand{\proofname}{Proof Sketch}\renewcommand{\qedsymbol}{}\proof}{\endproof}
+
+\newtheorem{manualtheoreminner}{Corollary}
+\newenvironment{manualtheorem}[1]{%
+  \renewcommand\themanualtheoreminner{#1}%
+  \manualtheoreminner
+}{\endmanualtheoreminner}
+
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\prob}{\bP}
+\DeclareMathOperator*{\ex}{\bE}
+
+\newcommand{\hlchange}[1]{{\setlength{\fboxsep}{0pt}\colorbox{pink}{$\displaystyle#1$}}}

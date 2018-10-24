@@ -1,0 +1,32 @@
+%!TEX root = main.tex
+
+\section{Statistical Parity Robustness}
+
+\subsection{Preliminaries}
+We will first define some preliminaries.
+\begin{itemize}[label={}, itemsep=-1em]
+\item[$x$]: vector of protected attributes. In most basic example, $x$ is 1-dimensional and $x \in [0, 1]$\\
+\item[$x'$]: vector of protected attributes. In most basic example, $x'$ is 1-dimensional and $x' \in [0, 1]$\\
+\item[$y$]: predicted output label, $y \in [0, 1]$ for all dimensions of x and x'\\
+\item[$row_i$]: individual represented as $(x_i, x'_i, y_i)$\\
+\item[$n$]: size of dataset (i.e., number of rows)\\
+\item[$D$]: dataset $D$ is a set of rows $\{ (x_i, x'_i, y_i) \}$ for $i \in [1, n]$\\
+\end{itemize}
+
+From these preliminaries, we define the following sets, representing subgroups of the global population.
+\begin{itemize}[label={}, itemsep=-1em]
+\item[$d_{11}$]: $\{ i \in d_{11} | y_i = 1 \land x_i = 1 \}$\\
+\item[$d_{10}$]: $\{ i \in d_{10} | y_i = 1 \land x_i = 0 \}$\\
+\item[$d_{1}$]: $\{ i \in d_{1} | x_i = 1 \}$\\
+\end{itemize}
+
+We take the definition of $\gamma$ statistical parity to be
+\[
+\left| P[ y = 1 | x = 1] - P[ y = 1 | x = 0] \right| < \gamma,
+\]
+
+and derive the equivalent representation 
+
+\[
+\frac{\left| d_{11} \right|}{\left| d_1 \right|} - \frac{d_{10}}{n - \left| d_1 \right|} < \gamma
+\]
